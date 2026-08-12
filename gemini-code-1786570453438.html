@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retirement Countdown</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .card {
+            background-color: #1e1e1e;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 10px 0;
+            width: 100%;
+            max-width: 350px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        .number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2196F3;
+            margin: 10px 0;
+        }
+        .label {
+            font-size: 1rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Teacher Retirement Countdown</h1>
+
+    <div class="card">
+        <div class="label">Calendar Days</div>
+        <div class="number" id="calendar-days">--</div>
+    </div>
+
+    <div class="card">
+        <div class="label">Total Work Days</div>
+        <div class="number" id="work-days">--</div>
+    </div>
+
+    <div class="card">
+        <div class="label">Student Contact Days</div>
+        <div class="number" id="school-days">--</div>
+    </div>
+
+    <script>
+        // Start date: June 4, 2026
+        // Work end date: June 2, 2027
+        // Student end date: May 28, 2027
+
+        const TOTAL_WORK_DAYS = 184;
+        const TOTAL_SCHOOL_DAYS = 170;
+
+        // Specific non-school workdays (Yellow/PD days/Conferences)
+        // Dates format: YYYY-MM-DD
+        const nonSchoolWorkdays = [
+            "2026-08-24", "2026-08-25", "2026-08-27", "2026-08-28", // Aug PD
+            "2026-08-26", "2026-08-31",                             // Welcome conf
+            "2026-09-28",                                           // Sept PD
+            "2026-11-25",                                           // Nov Conf/PD
+            "2027-01-19",                                           // Jan PD
+            "2027-03-29",                                           // Mar PD/Conf
+            "2027-06-01", "2027-06-02"                              // June PD
+        ];
+
+        // 0.5 extra conference evening credit days
+        const halfDays = ["2026-11-19", "2026-11-24", "2027-03-16", "2027-03-18"];
+
+        function calculateCountdown() {
+            const now = new Date();
+            const endWork = new Date('2027-06-02T23:59:59');
+            const endSchool = new Date('2027-05-28T23:59:59');
+
+            // 1. Remaining Calendar Days
+            const diffTime = endWork - now;
+            const remainingCalendarDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+
+            // Calculate elapsed work and school days
+            let elapsedSchoolDays = 0;
+            let elapsedWorkDays = 0;
+
+            const startDate = new Date('2026-08-24T00:00:00');
+            let current = new Date(startDate);
+
+            while (current <= now && current <= endWork) {
+                const dateStr = current.toISOString().split('T')[0];
+                const dayOfWeek = current.getDay();
+
+                // Check if weekday (Mon-Fri)
+                const isWeekday = dayOfWeek !== 0 && dayOfWeek !== 6;
+
+                // Check holidays/vacation (21 red days)
+                const isVacation = 
+                    (dateStr === "2026-09-07") || 
+                    (dateStr >= "2026-10-15" && dateStr <= "2026-10-16") ||
+                    (dateStr >= "2026-11-26" && dateStr <= "2026-11-27") ||
+                    (dateStr >= "2026-12-23" && dateStr <= "2027-01-01") ||
+                    (dateStr === "2027-01-18") ||
+                    (dateStr === "2027-02-15") ||
+                    (dateStr >= "2027-03-22" && dateStr <= "2027-03-26") ||
+                    (dateStr === "2027-05-31");
+
+                if (isWeekday && !isVacation) {
+                    elapsedWorkDays += 1;
+                    if (!nonSchoolWorkdays.includes(dateStr)) {
+                        elapsedSchoolDays += 1;
+                    }
+                }
+
+                // Add half days credit if past
+                if (halfDays.includes(dateStr) && current < now) {
+                    elapsedWorkDays += 0.5;
+                }
+
+                current.setDate(current.getDate() + 1);
+            }
+
+            const remainingWorkDays = Math.max(0, TOTAL_WORK_DAYS - elapsedWorkDays);
+            const remainingSchoolDays = Math.max(0, TOTAL_SCHOOL_DAYS - elapsedSchoolDays);
+
+            document.getElementById('calendar-days').innerText = remainingCalendarDays;
+            document.getElementById('work-days').innerText = remainingWorkDays;
+            document.getElementById('school-days').innerText = remainingSchoolDays;
+        }
+
+        calculateCountdown();
+        setInterval(calculateCountdown, 60000); // Update every minute
+    </script>
+</body>
+</html>
